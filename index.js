@@ -47,19 +47,23 @@ if (process.env.NODE_ENV !== 'production') {
 // Security middleware
 app.use(helmet());
 
-// CORS setup
+// Dynamic CORS setup
 const allowedOrigins = [
-  process.env.CLIENT_URL,       // Production frontend
-  'http://localhost:5173',      // Dev frontend
+  'http://localhost:5173', // Dev frontend
 ];
+
+// Regex for any Netlify deploy URL
+const netlifyRegex = /^https:\/\/[a-z0-9-]+\.netlify\.app$/;
 
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true); // allow server-to-server or Postman
-      if (allowedOrigins.includes(origin)) {
+
+      if (allowedOrigins.includes(origin) || netlifyRegex.test(origin)) {
         return callback(null, true);
       }
+
       callback(new Error(`CORS policy: Origin ${origin} not allowed`));
     },
     credentials: true,
@@ -86,7 +90,7 @@ app.get('/', (req, res) => {
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => logger.info('MongoDB connected successfully'))
-  .catch((err) => logger.error(' MongoDB connection error:', err));
+  .catch((err) => logger.error('MongoDB connection error:', err));
 
 // API Routes
 app.use('/api/tests', testRoutes);
