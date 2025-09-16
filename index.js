@@ -53,14 +53,14 @@ app.use(
     origin:
       process.env.NODE_ENV === 'production'
         ? process.env.CLIENT_URL
-        : 'http://localhost:5173', // ✅ keep localhost for dev
+        : 'http://localhost:5173', // dev frontend
     credentials: true
   })
 );
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100
 });
 app.use('/api', limiter);
@@ -71,12 +71,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
 mongoose
-  .connect(process.env.MONGO_URI, {
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => logger.info('✅ MongoDB connected successfully'))
   .catch((err) => logger.error('❌ MongoDB connection error:', err));
 
-// Routes
+// API routes
 app.use('/api/tests', testRoutes);
 app.use('/api/reports', reportRoutes);
 
@@ -94,13 +93,16 @@ if (process.env.NODE_ENV === 'production') {
   const distPath = join(__dirname, '../dist');
   app.use(express.static(distPath));
 
-  app.get('*', (req, res) => {
+  // ✅ FIX: use middleware instead of app.get('*')
+  app.use((req, res) => {
     res.sendFile(join(distPath, 'index.html'));
   });
 }
 
+// Error handling middleware
 app.use(errorHandler);
 
+// Global error handlers
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
@@ -110,6 +112,7 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(
     `🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`
