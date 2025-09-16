@@ -40,7 +40,7 @@ const logger = winston.createLogger({
 if (process.env.NODE_ENV !== 'production') {
   console.log(
     'API key loaded:',
-    process.env.OPENAI_API_KEY ? '✔️ yes' : '❌ missing'
+    process.env.OPENAI_API_KEY ? ' yes' : ' missing'
   );
 }
 
@@ -85,8 +85,8 @@ app.get('/', (req, res) => {
 // MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => logger.info('✅ MongoDB connected successfully'))
-  .catch((err) => logger.error('❌ MongoDB connection error:', err));
+  .then(() => logger.info('MongoDB connected successfully'))
+  .catch((err) => logger.error(' MongoDB connection error:', err));
 
 // API Routes
 app.use('/api/tests', testRoutes);
@@ -127,7 +127,7 @@ process.on('uncaughtException', (error) => {
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(
-    `🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`
+    `Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`
   );
 });
 
