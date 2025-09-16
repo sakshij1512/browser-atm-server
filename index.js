@@ -98,7 +98,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(distPath));
 
   // ✅ fallback for SPA routing
-  app.get('*', (req, res) => {
+   app.use((req, res) => {
     res.sendFile(join(distPath, 'index.html'));
   });
 }
