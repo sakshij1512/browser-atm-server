@@ -20,7 +20,10 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-console.log("api key", process.env.OPENAI_API_KEY)
+
+if (process.env.NODE_ENV !== 'production') {
+  console.log("API key loaded:", process.env.OPENAI_API_KEY ? "✔️ yes" : "❌ missing");
+}
 
 // Logger configuration
 const logger = winston.createLogger({
@@ -42,14 +45,16 @@ const logger = winston.createLogger({
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL : 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.CLIENT_URL
+    : 'https://lucent-tulumba-6795ca.netlify.app',
   credentials: true
 }));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100
 });
 app.use('/api', limiter);
 
@@ -72,19 +77,21 @@ app.use('/api/reports', reportRoutes);
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
-    status: 'ok', 
+    status: 'ok',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Serve static files in production
+// Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(join(__dirname, '../dist')));
-  
-  app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
-});
+  const distPath = join(__dirname, '../dist');
+  app.use(express.static(distPath));
+
+  // ✅ Use middleware (no path-to-regexp issues)
+  app.use((req, res) => {
+    res.sendFile(join(distPath, 'index.html'));
+  });
 }
 
 // Error handling middleware
@@ -101,7 +108,7 @@ process.on('uncaughtException', (error) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  logger.info(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 });
 
 export default app;
