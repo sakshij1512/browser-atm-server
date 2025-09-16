@@ -19,7 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000; // ✅ Railway will inject PORT
 
 // Show API key status in non-production
 if (process.env.NODE_ENV !== 'production') {
@@ -53,14 +53,14 @@ app.use(
     origin:
       process.env.NODE_ENV === 'production'
         ? process.env.CLIENT_URL
-        : 'http://localhost:5173', // dev frontend
+        : 'http://localhost:5173', // ✅ dev frontend
     credentials: true
   })
 );
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100
 });
 app.use('/api', limiter);
@@ -69,13 +69,17 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/', (req, res) => {
+  res.send('Server is running! Visit /api/health for API status.');
+});
+
 // MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => logger.info('✅ MongoDB connected successfully'))
   .catch((err) => logger.error('❌ MongoDB connection error:', err));
 
-// API routes
+// Routes
 app.use('/api/tests', testRoutes);
 app.use('/api/reports', reportRoutes);
 
@@ -93,8 +97,8 @@ if (process.env.NODE_ENV === 'production') {
   const distPath = join(__dirname, '../dist');
   app.use(express.static(distPath));
 
-  // ✅ FIX: use middleware instead of app.get('*')
-  app.use((req, res) => {
+  // ✅ fallback for SPA routing
+  app.get('*', (req, res) => {
     res.sendFile(join(distPath, 'index.html'));
   });
 }
@@ -112,7 +116,6 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-// Start server
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(
     `🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`
