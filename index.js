@@ -47,6 +47,9 @@ if (process.env.NODE_ENV !== 'production') {
 // Security middleware
 app.use(helmet());
 
+// Trust first proxy (required for express-rate-limit behind proxies like Railway, Heroku)
+app.set('trust proxy', 1);
+
 // Dynamic CORS setup
 const allowedOrigins = [
   'http://localhost:5173', // Dev frontend
