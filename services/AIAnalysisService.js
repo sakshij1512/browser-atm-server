@@ -104,7 +104,6 @@ Please provide:
   }
 
   parseAIResponse(response, results) {
-    // Simple parsing - in production, you'd want more sophisticated parsing
     const lines = response.split('\n').filter(line => line.trim());
     
     const riskLevel = this.extractRiskLevel(response);
